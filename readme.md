@@ -20,7 +20,7 @@ embedding_models = [
 
 ingestion uses a sliding window method, where a sliding window 1/2 the size of the context is taken on each pass for the respective models. First text-embedding-ada-002 with 8192 tokens, which is itself split into smaller chunks of 512 using the sliding window method.
 
-Then the large chunks of 8192 are summarized using openAI into 512 tokens, and then those summaries are themselves summarized into a supersummary, which is also indexed.
+Then the large chunks of 8192 are summarized using openAI into 512 tokens, and then those summaries are themselves summarized into a supersummary,those summaries and supersummaries are also indexed. Each embedding has a set of metadata, relationships, and parsing settings, to keep track of summaries, parent nodes, child nodes, start token, end token, etc.
 
 During the retrieval process, the first step is to use text-embedding-ada-002 to retrieve the selected number of results using K nearest neigbors, then the child embeddings are taken from those, and those children are reduced to the selected numbers if 512 token final results.
 

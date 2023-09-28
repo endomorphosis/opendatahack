@@ -240,7 +240,7 @@ class OpenAIAPI:
 
 def main():
     test_api_key = {
-        "api_key": "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"
+        "api_key": ""
     }
     test_model = 'gpt-3.5-turbo'
     test_complete_model = 'text-davinci-003'

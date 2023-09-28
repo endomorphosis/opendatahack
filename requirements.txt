@@ -1,0 +1,18 @@
+torch==2.0.0
+llama-cpp-python
+numpy<=1.25.0
+cloudkit-worker @ git+https://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@github.com/hallucinate-ai/cloudkit#subdirectory=worker
+transformers
+sentencepiece
+accelerate
+scipy
+protobuf<=3.20
+gguf
+openai
+pandas
+faiss-cpu
+faiss-gpu
+sentence_transformers
+InstructorEmbedding
+FlagEmbedding
+w3storage

@@ -74,7 +74,7 @@ def main():
     cwd = os.getcwd()
     dir = os.path.dirname(__file__)
     test_api_key = {
-        "api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDVlRGFlRjFkYzNmQjE5NTcwZmYzMEE5OUJhZjQzOUZkQTIwMjUwZDQiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2OTU3MTkxMjAwNDcsIm5hbWUiOiJLTk4ifQ.9t1sIPFD7VJBUryhc0himTFv1YRwsYVf2DuxfwgAHxs"
+        "api_key": ""
     }
     web3storage = Web3StorageAPI(None, meta=test_api_key)
     files = web3storage.list()

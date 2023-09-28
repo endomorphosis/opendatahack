@@ -967,8 +967,8 @@ def main(resources, meta):
 
 if __name__ == '__main__':
     endpoint = "https://object.ord1.coreweave.com"
-    access_key = "OVEXCZJJQPUGXZOV"
-    secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10"
+    access_key = ""
+    secret_key = ""
     host_bucket = "%(bucket)s.object.ord1.coreweave.com"
     bucket = "swissknife-knn"
     dir = "test"
@@ -979,7 +979,7 @@ if __name__ == '__main__':
     }
     meta = {}
     meta["config"] = config
-    meta['openai_api_key'] = "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"
-    meta["web3_api_key"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDVlRGFlRjFkYzNmQjE5NTcwZmYzMEE5OUJhZjQzOUZkQTIwMjUwZDQiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2OTU3MTkxMjAwNDcsIm5hbWUiOiJLTk4ifQ.9t1sIPFD7VJBUryhc0himTFv1YRwsYVf2DuxfwgAHxs"
+    meta['openai_api_key'] = ""
+    meta["web3_api_key"] = ""
     main(None, meta=meta)
     pass

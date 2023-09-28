@@ -61,8 +61,8 @@ class S3:
 
 def main():
     endpoint = "https://object.ord1.coreweave.com"
-    access_key = "OVEXCZJJQPUGXZOV"
-    secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10"
+    access_key = ""
+    secret_key = ""
     host_bucket = "%(bucket)s.object.ord1.coreweave.com"
     bucket = "swissknife-models"
     dir = "wizardmath-7b-v1.0-4bit@gguf"

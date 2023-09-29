@@ -24,5 +24,14 @@ Then the large chunks of 8192 are summarized using openAI into 512 tokens, and t
 
 During the retrieval process, the first step is to use text-embedding-ada-002 to retrieve the selected number of results using K nearest neigbors, then the child embeddings are taken from those, and those children are reduced to the selected numbers if 512 token final results.
 
-TODO: implement HSNW.
+TODO: implement HSNW. (done)
 TODO: implement sharding of vector stores when size exceeds 100MB
+
+Examples:
+
+https://bafkreih3iqd6xiadh5bgpltfd3zswa7rybvtcpnqhqh646q6yc4jsiv3fa.ipfs.w3s.link/
+https://bafkreieyud5mkb77crw7m4bw5zl2sqtadgftx7gi7ydfiin6w6df4336cu.ipfs.w3s.link/
+https://bafybeifm3p4wl2anf5uhgmedpjgkaz7qm2qiezo63eunvqcczg3nbm6qf4.ipfs.w3s.link/
+https://bafkreifzlvsja3nuvplhpopq6hddjhduyyemd5uu762nodk6feefmfrb3q.ipfs.w3s.link/
+https://bafkreigv7ptbmiruodtr5ohf2sre6bccvpz2x3jdu5mls4afcs4kmrqd6e.ipfs.w3s.link/
+https://bafkreiexewnxvwhp2siwldho5gyvdsk5njeienzzokbmueqd6m2jsrhosy.ipfs.w3s.link/

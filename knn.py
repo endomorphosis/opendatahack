@@ -15,6 +15,8 @@ import math
 from hf_embed import HFEmbed
 import random
 from web3storage import Web3StorageAPI
+import hnswlib
+import pickle
 
 embedding_models = [
     "text-embedding-ada-002",
@@ -26,17 +28,21 @@ embedding_models = [
     "instructor-xl"
 ]
 
-summarization_models = ['gpt-3.5-turbo','gpt-4','gpt-3.5-turbo-16k', 'gpt-3.5-turbo-instruct']
-
-vector_index_ids = [
-    "text-embedding-ada-002",
-    "gte-large",
-    "gte-base",
-    "bge-base-en-v1.5",
-    "bge-large-en-v1.5",
-    "instructor",
-    "instructor-xl"
+summarization_models = [
+    'gpt-3.5-turbo',
+    'gpt-4','gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-instruct'
 ]
+
+vector_index_ids = {
+    "text-embedding-ada-002" : 1536,
+    "gte-large": 1024,
+    "gte-base": 768,
+    "bge-base-en-v1.5": 768,
+    "bge-large-en-v1.5": 1024,
+    "instructor": 768,
+    "instructor-xl": 768
+}
 
 class KNN:
     cwd = os.getcwd()
@@ -56,6 +62,8 @@ class KNN:
         self.resources = resources
         self.method = None
         self.k = None
+        self.indexes = {}
+
         if meta is not None:
             if "config" in meta:
                 if meta['config'] is not None:
@@ -530,7 +538,7 @@ class KNN:
         }
 
         ## prepare the vector index
-        for vector_index_id in vector_index_ids:
+        for vector_index_id in embedding_models:
             converted_vector_index_id = hashlib.sha256(vector_index_id.encode('utf-8')).hexdigest()
             converted_vector_index_id = converted_vector_index_id[:36]
             converted_vector_index_id = converted_vector_index_id[:8] + "-" + converted_vector_index_id[8:12] + "-" + converted_vector_index_id[12:16] + "-" + converted_vector_index_id[16:20] + "-" + converted_vector_index_id[20:]
@@ -729,18 +737,66 @@ class KNN:
         
     def postgres(self, **kwargs):
         #create and prep a database
-        pass
+        return
 
     def uploads3(self, **kwargs):
         #store a document
-        pass
+        return
     
-    def topk(self, query, data, top_k, model, **kwargs):
+    def build_index(self, model, data, **kwargs):
+        model_id = self.convert_to_uuid(model)
+        index = hnswlib.Index(space = 'l2', dim = vector_index_ids[model])
+        ids = []
+        vectors = list(data.values())
+        for i in range(len(vectors)):
+            ids.append(i)
+        ids = numpy.array(ids)
+        vectors = numpy.array(vectors)
+        index.add_items(vectors, ids)
+        results = pickle.dumps(index)
+        return results
+
+    def topk(self, query, data, top_k, model,  bucket, dir, **kwargs):
         #model_embedding = self.HFEmbed.embed(model, None, query, **kwargs)
         #search a document
+        index_keys = list(self.indexes.keys())
+        if len(index_keys) > 0:
+            if bucket in index_keys:
+                index_sub_keys = list(self.indexes[bucket].keys())
+                if len(index_sub_keys) > 0:
+                    if dir in index_sub_keys:
+                        if self.indexes[bucket][dir] != None:
+                            this_index = self.indexes[bucket][dir]
+                            pass
+                        else:
+                            self.indexes[bucket][dir] = {}
+                            self.indexes[bucket][dir][model] = self.build_index(model, data, **kwargs)
+                    else:
+                            self.indexes[bucket][dir] = {}
+                            self.indexes[bucket][dir][model] = self.build_index(model, data, **kwargs)
+                else:
+                    self.indexes[bucket][dir] = {}
+                    self.indexes[bucket][dir][model] = self.build_index(model, data, **kwargs)
+            else:
+                self.indexes[bucket] = {}
+                self.indexes[bucket][dir] = {}
+                self.indexes[bucket][dir][model] = self.build_index(model, data, **kwargs)
+        else:
+            self.indexes[bucket] = {}
+            self.indexes[bucket][dir] = {}
+            self.indexes[bucket][dir][model] = self.build_index(model, data, **kwargs)
 
-    
-        pass
+        if self.indexes[bucket][dir][model] != None:
+            this_index = pickle.load(self.indexes[bucket][dir][model])
+            labels, distances = this_index.knn_query(data, k = top_k)
+            node_ids = []
+            data_keys = list(data.keys())
+            for label in labels:
+                node_ids.append(data_keys[label])
+
+            return node_ids , distances
+        else:
+            return None
 
     def randomk(self, query, data, top_k, model, **kwargs):
                 
@@ -751,7 +807,7 @@ class KNN:
 
         return results
     
-    def search(self, query, top_k, model, **kwargs):
+    def search(self, query, top_k, model,  bucket, dir, **kwargs):
         ## list web3 documents
         documents = self.web3.list()
         metadata = None
@@ -797,7 +853,7 @@ class KNN:
             
             first_search_document_ids = []
             if len(list(first_model_store.keys())) > 0:
-                first_search_results = self.randomk(query, first_model_store, top_k, first_model, **kwargs)
+                first_search_results = self.topk(query, first_model_store, top_k, first_model,  bucket, dir, **kwargs)
                 for result in first_search_results:
                     first_search_document_ids.append(first_model_index[result])  
 
@@ -819,7 +875,7 @@ class KNN:
                 for first_search_document_child in first_search_document_children:
                     this_vector_id = inverse_second_model_index[first_search_document_child]
                     second_model_vectors[this_vector_id] = second_model_store[this_vector_id]
-                second_search_results = self.randomk(query, second_model_vectors, top_k, second_model, **kwargs)
+                second_search_results = self.topk(query, second_model_vectors, top_k, second_model,  bucket, dir, **kwargs)
                 for result in second_search_results:
                     this_document_id = second_model_index[this_vector_id]
                     second_document_ids.append(this_document_id)
@@ -944,26 +1000,26 @@ class KNN:
             #for i in range(4):
             #    random_vectors.append(random.random())
             #return random_vectors
-            return self.HFEmbed.embed("bge-large-en-v1.5", None, text, **kwargs)
+            return self.HFEmbed.embed("bge-large-en-v1.5", None, text, **kwargs).tolist()
         elif self.model == "bge-base-en":
-            return self.HFEmbed.embed("bge-base-en", None, text, **kwargs)
+            return self.HFEmbed.embed("bge-base-en", None, text, **kwargs).tolist()
         elif self.model == "gte-large":
-            return self.HFEmbed.embed("gte-large", None, text, **kwargs)
+            return self.HFEmbed.embed("gte-large", None, text, **kwargs).tolist()
         elif self.model == "gte-base":
-            return self.HFEmbed.embed("gte-base", None, text, **kwargs)
+            return self.HFEmbed.embed("gte-base", None, text, **kwargs).tolist()
         elif self.model == "bge-base-en-v1.5":
-            return self.HFEmbed.embed("bge-base-en-v1.5", None, text, **kwargs)
+            return self.HFEmbed.embed("bge-base-en-v1.5", None, text, **kwargs).tolist()
         elif self.model == "instructor":
-            return self.HFEmbed.embed(text, "instructor", None, text, **kwargs)
+            return self.HFEmbed.embed(text, "instructor", None, text, **kwargs).tolist()
         elif self.model == "instructor-xl":
-            return self.HFEmbed.embed("instructor-xl", None, text, **kwargs)
+            return self.HFEmbed.embed("instructor-xl", None, text, **kwargs).tolist()
         else:
             return "model not implemented"
 
 def main(resources, meta):
     Index = KNN(resources, meta)
-    results = Index.ingest("raw","web3","books","books")
-    #results = Index.search("text to search", 5, "bge-large-en-v1.5" )
+    #results = Index.ingest("raw","web3","books","books")
+    results = Index.search("text to search", 5, "bge-large-en-v1.5", "books","books" )
 
 if __name__ == '__main__':
     endpoint = "https://object.ord1.coreweave.com"
